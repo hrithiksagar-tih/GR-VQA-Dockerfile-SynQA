@@ -56,17 +56,36 @@ RUN groupadd --gid "${GID}" hrithik_sagar && \
     useradd --uid "${UID}" --gid "${GID}" -m -s /bin/bash hrithik_sagar && \
     echo "hrithik_sagar:abcde1234" | chpasswd
 
-# ========== SSH Setup for Git ==========
+# ========== Switch to User ==========
 USER hrithik_sagar
 WORKDIR /home/hrithik_sagar
 
-# Ensure .ssh folder exists and configure known_hosts
+# ========== SSH Setup for Git ==========
 RUN mkdir -p ~/.ssh && \
     ssh-keyscan github.com >> ~/.ssh/known_hosts && \
     chmod 700 ~/.ssh
 
-# Add keychain eval to bashrc (if SSH key is mounted, it'll load)
+# ========== Add keychain to bashrc ==========
 RUN echo 'eval $(keychain --eval --agents ssh ~/.ssh/id_rsa)' >> ~/.bashrc
+
+# ========== Install Python Packages ==========
+RUN pip install --upgrade pip && pip install \
+    natsort==8.4.0 \
+    numpy==2.2.4 \
+    pandas==2.2.3 \
+    Pillow==11.1.0 \
+    protobuf==6.30.2 \
+    psutil==7.0.0 \
+    python-dotenv==1.1.0 \
+    PyYAML==6.0.2 \
+    scikit_learn==1.6.1 \
+    torch==2.6.0 \
+    tqdm==4.67.1 \
+    transformers==4.50.3 \
+    vllm==0.8.2 \
+    beautifulsoup4 \
+    IPython \
+    sentence-transformers
 
 # ========== Final Test ==========
 RUN echo "Python version as user: $(python3 --version)"
