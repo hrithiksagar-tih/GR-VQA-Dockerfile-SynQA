@@ -1,20 +1,20 @@
 FROM nvcr.io/nvidia/pytorch:22.03-py3
 
-# ========== Build Arguments ==========
+# Define build arguments
 ARG UID
 ARG GID
 
-# ========== Validate UID/GID ==========
+# Ensure UID and GID are provided
 RUN if [ -z "$UID" ] || [ -z "$GID" ]; then \
     echo "Error: UID and GID build arguments must be provided." >&2; \
     exit 1; \
     fi
 
-# ========== Environment ==========
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=UTC
+# Set timezone and disable interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive TZ=UTC
 
-# ========== Install Core Dependencies ==========
+# 1) Install base packages (including keychain)
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ffmpeg \
@@ -30,8 +30,7 @@ RUN apt-get update && \
         fonts-noto \
         python3.8-venv \
         python3.8-dev \
-        keychain \
-        openssh-client && \
+        keychain && \
     ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata && \
     add-apt-repository ppa:deadsnakes/ppa && \
@@ -41,53 +40,37 @@ RUN apt-get update && \
         python3.11-venv \
         python3.11-dev \
         python3-pip && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*  # Cleanup
 
-# ========== Set Python 3.11 as Default ==========
+# 2) Set Python 3.11 as the default
+
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 2 && \
     update-alternatives --set python3 /usr/bin/python3.11
 
 ENV PATH="/usr/bin:$PATH"
 
+# Verify Python version as root (should print Python 3.11.x)
 RUN python3 --version
 
-# ========== Add User ==========
+# 3) Create a group and user
+
 RUN groupadd --gid "${GID}" hrithik_sagar && \
     useradd --uid "${UID}" --gid "${GID}" -m -s /bin/bash hrithik_sagar && \
     echo "hrithik_sagar:abcde1234" | chpasswd
 
-# ========== Switch to User ==========
+# Switch to the new user
 USER hrithik_sagar
+
+# Create and set the working directory
 WORKDIR /home/hrithik_sagar
 
-# ========== SSH Setup for Git ==========
-RUN mkdir -p ~/.ssh && \
-    ssh-keyscan github.com >> ~/.ssh/known_hosts && \
-    chmod 700 ~/.ssh
+# Verify Python version as the new user
+RUN echo "Python version: $(python3 --version)"
 
-# ========== Add keychain to bashrc ==========
-RUN echo 'eval $(keychain --eval --agents ssh ~/.ssh/id_rsa)' >> ~/.bashrc
-
-# ========== Install Python Packages ==========
-RUN pip install --upgrade pip && pip install \
-    natsort==8.4.0 \
-    numpy==2.2.4 \
-    pandas==2.2.3 \
-    Pillow==11.1.0 \
-    protobuf==6.30.2 \
-    psutil==7.0.0 \
-    python-dotenv==1.1.0 \
-    PyYAML==6.0.2 \
-    scikit_learn==1.6.1 \
-    torch==2.6.0 \
-    tqdm==4.67.1 \
-    transformers==4.50.3 \
-    vllm==0.8.2 \
-    beautifulsoup4 \
-    IPython \
-    sentence-transformers
-
-# ========== Final Test ==========
-RUN echo "Python version as user: $(python3 --version)"
+# (Optional) Create or activate your Python virtual environment here
+# Example:
+# RUN python3 -m venv .venv && \
+#     source .venv/bin/activate && \
+#     pip install ...
 
 CMD ["/bin/bash"]
