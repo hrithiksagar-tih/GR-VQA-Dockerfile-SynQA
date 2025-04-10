@@ -54,9 +54,11 @@ RUN python3 --version
 
 # 3) Create a group and user
 
+# Create user, add to sudo group, and enable passwordless sudo
 RUN groupadd --gid "${GID}" hrithik_sagar && \
-    useradd --uid "${UID}" --gid "${GID}" -m -s /bin/bash hrithik_sagar && \
-    echo "hrithik_sagar:abcde1234" | chpasswd
+    useradd --uid "${UID}" --gid "${GID}" -m -s /bin/bash -G sudo hrithik_sagar && \
+    echo "hrithik_sagar:abcde1234" | chpasswd && \
+    echo 'hrithik_sagar ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Switch to the new user
 USER hrithik_sagar
