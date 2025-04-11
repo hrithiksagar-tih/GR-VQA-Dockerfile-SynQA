@@ -55,7 +55,7 @@ RUN python3 --version
 # 2b) Install PyTorch 2.6.0 (CUDA 12.1) and flashinfer
 RUN python3 -m pip install --upgrade pip && \
     pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu121 --extra-index-url https://pypi.org/simple && \
-    pip install flashinfer
+    pip install flashinfer-python -i https://flashinfer.ai/whl/cu124/torch2.6/
 
 # 3) Create a group and user
 
