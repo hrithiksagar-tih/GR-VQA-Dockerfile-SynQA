@@ -14,7 +14,6 @@ RUN if [ -z "$UID" ] || [ -z "$GID" ]; then \
 ENV DEBIAN_FRONTEND=noninteractive TZ=UTC
 
 # 1) Install base packages (including keychain)
-
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ffmpeg \
@@ -41,18 +40,15 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*  # Cleanup
 
 # 2) Set Python 3.11 as the default
-
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 2 && \
     update-alternatives --set python3 /usr/bin/python3.11
 
 ENV PATH="/usr/bin:$PATH"
 
-# Verify Python version as root (should print Python 3.11.x)
+# Verify Python version as root
 RUN python3 --version
 
 # 3) Create a group and user
-
-# Create user, add to sudo group, and enable passwordless sudo
 RUN groupadd --gid "${GID}" hrithik_sagar && \
     useradd --uid "${UID}" --gid "${GID}" -m -s /bin/bash -G sudo hrithik_sagar && \
     echo "hrithik_sagar:abcde1234" | chpasswd && \
@@ -64,13 +60,16 @@ USER hrithik_sagar
 # Create and set the working directory
 WORKDIR /home/hrithik_sagar
 
-# Verify Python version as the new user
-RUN echo "Python version: $(python3 --version)"
+# 4) Set up Python virtual environment and install dependencies
+RUN python3 -m venv .venv && \
+    . .venv/bin/activate && \
+    pip install --upgrade pip && \
+    pip install packaging ninja && \
+    pip install torch && \
+    pip install flash-attn --no-build-isolation && \
+    pip install vllm --pre --extra-index-url https://wheels.vllm.ai/nightly
 
-# (Optional) Create or activate your Python virtual environment here
-# Example:
-# RUN python3 -m venv .venv && \
-#     source .venv/bin/activate && \
-#     pip install ...
+# Set environment variable to enforce FlashAttention usage
+ENV VLLM_ATTENTION_BACKEND=FLASH_ATTN
 
 CMD ["/bin/bash"]
