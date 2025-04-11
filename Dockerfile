@@ -64,6 +64,7 @@ WORKDIR /home/hrithik_sagar
 RUN python3 -m venv .venv && \
     . .venv/bin/activate && \
     pip install --upgrade pip && \
+    pip install wheel && \
     pip install packaging ninja && \
     pip install torch && \
     pip install flash-attn --no-build-isolation && \
