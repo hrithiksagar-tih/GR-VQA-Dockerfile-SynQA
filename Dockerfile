@@ -28,8 +28,6 @@ RUN apt-get update && \
         software-properties-common \
         tzdata \
         fonts-noto \
-        python3.8-venv \
-        python3.8-dev \
         keychain && \
     ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata && \
